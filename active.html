@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard</title>
+    <style>
+        /* Background image styling */
+        body {
+            background-image: url("{{ url_for('static', filename='pic.webp') }}");
+            background-size: cover;
+            background-repeat: no-repeat;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Main layout styling */
+        .top-left, .top-right {
+            position: absolute;
+            padding: 10px;
+        }
+
+        /* Icon and amount section */
+        .top-left {
+            top: 10px;
+            left: 10px;
+        }
+
+        .top-right {
+            top: 10px;
+            right: 10px;
+            font-weight: bold;
+        }
+
+        /* Welcome message and link styling */
+        .welcome-message {
+            text-align: center;
+            margin-top: 40vh;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .dashboard-link {
+            display: block;
+            text-align: center;
+            margin: 20px 0;
+            font-size: 1em;
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .withdraw-btn {
+            position: absolute;
+            bottom: 15vh;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 75%;
+            padding: 15px;
+            font-size: 1.2em;
+            color: white;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        /* Popup styling */
+        .popup {
+            display: none;
+            position: fixed;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <!-- Top left icon with Profile and Settings options -->
+    <div class="top-left">
+        <img src="{{ url_for('static', filename='kk.png') }}" alt="Icon" style="width: 40px; height: 40px; cursor: pointer;" onclick="togglePopup('menu-popup')">
+    </div>
+
+    <!-- Top right balance display -->
+    <div class="top-right">Balance: Ksh {{ amount }}</div>
+
+    <!-- Welcome message -->
+    <div class="welcome-message">Welcome, {{ username }}</div>
+
+    <!-- Link to Dashboard -->
+    <a href="{{ url_for('dashboard') }}" class="dashboard-link">Go to Dashboard</a>
+
+    <!-- Withdraw button -->
+    <button class="withdraw-btn" onclick="togglePopup('withdraw-popup')">Withdraw</button>
+
+    <!-- Popup for the menu options (Profile and Settings) -->
+    <div id="menu-popup" class="popup">
+        <button onclick="location.href='/profile'">Profile</button>
+        <button onclick="location.href='/settings'">Settings</button>
+    </div>
+
+    <!-- Popup for Withdraw options (Amount and Phone Number) -->
+    <div id="withdraw-popup" class="popup">
+        <label for="amount">Amount:</label>
+        <input type="text" id="amount" placeholder="Enter amount"><br><br>
+        <label for="phone">Phone Number:</label>
+        <input type="text" id="phone" placeholder="Enter phone number"><br><br>
+        <button onclick="finishWithdrawal()">Finish</button>
+    </div>
+
+    <!-- JavaScript for managing popups -->
+    <script>
+        function togglePopup(id) {
+            const popup = document.getElementById(id);
+            // Toggle display for the popup
+            popup.style.display = (popup.style.display === 'block') ? 'none' : 'block';
+        }
+
+        // Hide popup if clicking outside it
+        document.addEventListener('click', function(event) {
+            const menuPopup = document.getElementById('menu-popup');
+            const withdrawPopup = document.getElementById('withdraw-popup');
+            const menuIcon = document.querySelector('.top-left img');
+            const withdrawButton = document.querySelector('.withdraw-btn');
+
+            if (!menuPopup.contains(event.target) && event.target !== menuIcon) {
+                menuPopup.style.display = 'none';
+            }
+            if (!withdrawPopup.contains(event.target) && event.target !== withdrawButton) {
+                withdrawPopup.style.display = 'none';
+            }
+        });
+
+        function finishWithdrawal() {
+            const amount = document.getElementById('amount').value;
+            const phone = document.getElementById('phone').value;
+
+            // Send AJAX request to the server
+            fetch('/withdraw', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ amount: amount, phone: phone })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'error') {
+                    alert(data.message); // Display error message
+                } else if (data.status === 'success') {
+                    alert(data.message); // Display success message
+                    location.reload(); // Reload to update the balance
+                }
+                document.getElementById('withdraw-popup').style.display = 'none';
+            })
+            .catch(error => {
+                alert('An error occurred. Please try again later.');
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>
